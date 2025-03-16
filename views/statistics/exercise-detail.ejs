@@ -1,0 +1,60 @@
+<%- include('../partials/header', {title: title}) %>
+
+<div class="mb-3">
+  <a href="/statistics" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Statistics</a>
+</div>
+
+<h1 class="mb-4">Exercise Details</h1>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">Exercise Information</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <p><strong>Date:</strong> <%= new Date(statistic.createdAt).toLocaleString() %></p>
+        <p><strong>Exercise Type:</strong> <%= statistic.exerciseType.charAt(0).toUpperCase() + statistic.exerciseType.slice(1) %></p>
+        <p><strong>Required Words:</strong> <%= statistic.wordPair.join(', ') %></p>
+      </div>
+      <div class="col-md-6">
+        <p><strong>Score:</strong>
+          <% for(let i = 1; i <= 5; i++) { %>
+            <i class="bi <%= i <= statistic.score ? 'bi-star-fill' : 'bi-star' %>"></i>
+          <% } %>
+          (<%= statistic.score %>/5)
+        </p>
+        <p><strong>All Words Used:</strong> 
+          <% if (statistic.allWordsUsed) { %>
+            <span class="text-success"><i class="bi bi-check-circle-fill"></i> Yes</span>
+          <% } else { %>
+            <span class="text-danger"><i class="bi bi-x-circle-fill"></i> No</span>
+          <% } %>
+        </p>
+      </div>
+    </div>
+
+    <hr>
+
+    <h6>Your Sentence:</h6>
+    <div class="alert alert-light">
+      <p><%= statistic.sentence %></p>
+    </div>
+
+    <h6>Feedback:</h6>
+    <div class="alert <%= statistic.score >= 4 ? 'alert-success' : statistic.score >= 2 ? 'alert-info' : 'alert-warning' %>">
+      <p><%= statistic.feedback %></p>
+    </div>
+
+    <% if (statistic.suggestions && statistic.suggestions.length > 0) { %>
+      <h6>Suggestions for Improvement:</h6>
+      <ul class="list-group">
+        <% statistic.suggestions.forEach(function(suggestion) { %>
+          <li class="list-group-item"><%= suggestion %></li>
+        <% }); %>
+      </ul>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,130 @@
+<%- include('../partials/header', {title: title}) %>
+
+<h1 class="mb-4">Your Statistics</h1>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Total Exercises</h5>
+      </div>
+      <div class="card-body">
+        <h2 class="display-4"><%= statistics.length %></h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-header bg-success text-white">
+        <h5 class="card-title mb-0">Average Score</h5>
+      </div>
+      <div class="card-body">
+        <h2 class="display-4"><%= averageScore.toFixed(1) %></h2>
+        <p>out of 5</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Word Usage Rate</h5>
+      </div>
+      <div class="card-body">
+        <h2 class="display-4"><%= wordUsageRate.toFixed(0) %>%</h2>
+        <p>of required words used</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">Progress Over Time</h5>
+  </div>
+  <div class="card-body">
+    <canvas id="progressChart" width="400" height="200"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <h5 class="card-title mb-0">Exercise History</h5>
+  </div>
+  <div class="card-body">
+    <% if (statistics.length === 0) { %>
+      <div class="alert alert-info">
+        <p>You haven't completed any exercises yet. <a href="/writing/exercise" class="alert-link">Start practicing now!</a></p>
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Exercise Type</th>
+              <th>Words</th>
+              <th>Score</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% statistics.forEach(function(stat) { %>
+              <tr>
+                <td><%= new Date(stat.createdAt).toLocaleDateString() %></td>
+                <td><%= stat.exerciseType.charAt(0).toUpperCase() + stat.exerciseType.slice(1) %></td>
+                <td><%= stat.wordPair.join(', ') %></td>
+                <td>
+                  <% for(let i = 1; i <= 5; i++) { %>
+                    <i class="bi <%= i <= stat.score ? 'bi-star-fill' : 'bi-star' %> small"></i>
+                  <% } %>
+                </td>
+                <td>
+                  <a href="/statistics/<%= stat._id %>" class="btn btn-sm btn-primary">View Details</a>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize chart if there are statistics
+    if (<%= statistics.length %> > 0) {
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      
+      const dates = <%- JSON.stringify(statistics.map(s => new Date(s.createdAt).toLocaleDateString())) %>;
+      const scores = <%- JSON.stringify(statistics.map(s => s.score)) %>;
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Score',
+            data: scores,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            tension: 0.1,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 5
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>

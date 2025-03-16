@@ -1,0 +1,35 @@
+<%- include('partials/header', {title: title}) %>
+
+<div class="jumbotron">
+  <h1 class="display-4">Welcome to TOEIC Study App</h1>
+  <p class="lead">Improve your English skills for the TOEIC exam with our interactive exercises.</p>
+  <hr class="my-4">
+  <p>Currently featuring the Writing section. More sections coming soon!</p>
+  <a class="btn btn-primary btn-lg" href="/writing" role="button">Start Writing Practice</a>
+</div>
+
+<div class="row mt-5">
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Writing Section</h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text">Practice writing sentences about photos using given word pairs, similar to Questions 1-5 in the TOEIC exam.</p>
+        <a href="/writing" class="btn btn-outline-primary">Go to Writing Practice</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card mb-4">
+      <div class="card-header bg-secondary text-white">
+        <h5 class="card-title mb-0">Coming Soon</h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text">We're working on adding more sections of the TOEIC exam: Listening, Reading, and Speaking.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

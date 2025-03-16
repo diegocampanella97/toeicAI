@@ -1,0 +1,122 @@
+<%- include('../partials/header', {title: title}) %>
+
+<div class="mb-3">
+  <a href="/statistics" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Statistics</a>
+</div>
+
+<h1 class="mb-4">Email Exercise Details</h1>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">Exercise Information</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <p><strong>Date:</strong> <%= new Date(emailResponse.createdAt).toLocaleString() %></p>
+        <p><strong>Exercise Type:</strong> Email Response</p>
+        <p><strong>Email Subject:</strong> <%= email.subject %></p>
+      </div>
+      <div class="col-md-6">
+        <p><strong>Overall Score:</strong>
+          <% for(let i = 1; i <= 5; i++) { %>
+            <i class="bi <%= i <= emailResponse.score ? 'bi-star-fill' : 'bi-star' %>"></i>
+          <% } %>
+          (<%= emailResponse.score %>/5)
+        </p>
+        <div class="row">
+          <div class="col-md-4">
+            <p><strong>Organization:</strong>
+              <% for(let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= i <= emailResponse.organization ? 'bi-star-fill' : 'bi-star' %> small"></i>
+              <% } %>
+            </p>
+          </div>
+          <div class="col-md-4">
+            <p><strong>Grammar:</strong>
+              <% for(let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= i <= emailResponse.grammar ? 'bi-star-fill' : 'bi-star' %> small"></i>
+              <% } %>
+            </p>
+          </div>
+          <div class="col-md-4">
+            <p><strong>Vocabulary:</strong>
+              <% for(let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= i <= emailResponse.vocabulary ? 'bi-star-fill' : 'bi-star' %> small"></i>
+              <% } %>
+            </p>
+          </div>
+        </div>
+        <p><strong>Tasks Completed:</strong> 
+          <% if (emailResponse.taskCompletion) { %>
+            <span class="text-success"><i class="bi bi-check-circle-fill"></i> Yes</span>
+          <% } else { %>
+            <span class="text-danger"><i class="bi bi-x-circle-fill"></i> No</span>
+          <% } %>
+        </p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div class="col-md-6">
+        <h6>Original Email:</h6>
+        <div class="card mb-3">
+          <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>From:</strong> <%= email.from %><br>
+                <strong>To:</strong> <%= email.to %><br>
+                <strong>Subject:</strong> <%= email.subject %>
+              </div>
+              <div>
+                <small class="text-muted"><%= email.date %></small>
+              </div>
+            </div>
+          </div>
+          <div class="card-body small">
+            <p><%= email.greeting %></p>
+            <% email.body.forEach(function(paragraph) { %>
+              <p><%= paragraph %></p>
+            <% }); %>
+            <p><%= email.closing %></p>
+            <p><%= email.signature %></p>
+          </div>
+        </div>
+        
+        <h6>Required Tasks:</h6>
+        <ul class="list-group mb-3">
+          <% email.tasks.forEach(function(task) { %>
+            <li class="list-group-item <%= emailResponse.taskCompletion ? 'list-group-item-success' : 'list-group-item-danger' %>">
+              <%= task %>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+      
+      <div class="col-md-6">
+        <h6>Your Response:</h6>
+        <div class="alert alert-light">
+          <p style="white-space: pre-line;"><%= emailResponse.response %></p>
+        </div>
+
+        <h6>Feedback:</h6>
+        <div class="alert <%= emailResponse.score >= 4 ? 'alert-success' : emailResponse.score >= 2 ? 'alert-info' : 'alert-warning' %>">
+          <p><%= emailResponse.feedback %></p>
+        </div>
+
+        <% if (emailResponse.suggestions && emailResponse.suggestions.length > 0) { %>
+          <h6>Suggestions for Improvement:</h6>
+          <ul class="list-group">
+            <% emailResponse.suggestions.forEach(function(suggestion) { %>
+              <li class="list-group-item"><%= suggestion %></li>
+            <% }); %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

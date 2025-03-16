@@ -1,0 +1,54 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Writing Exercise</h1>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">Write a Sentence Based on the Picture</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <img src="<%= imageUrl %>" alt="TOEIC Exercise Image" class="img-fluid mb-3">
+      </div>
+      <div class="col-md-6">
+        <div class="alert alert-info">
+          <p><strong>Instructions:</strong> Write a sentence about the picture using these two words:</p>
+          <div class="d-flex justify-content-center mb-3">
+            <span class="badge bg-primary mx-2 p-2"><%= words[0] %></span>
+            <span class="badge bg-primary mx-2 p-2"><%= words[1] %></span>
+          </div>
+          <hr>
+          <p><strong>Targeted Skills:</strong></p>
+          <ul class="small">
+            <li>Use correct word order</li>
+            <li>Write sentences with one or two clauses</li>
+            <li>Use adjectives, adverbs, and prepositions correctly</li>
+            <li>Use subordinating conjunctions correctly</li>
+            <li>Write sentences that are relevant to the photo</li>
+          </ul>
+          <p class="small mt-2"><strong>Tips:</strong></p>
+          <ol class="small">
+            <li>Begin by thinking about how you can use the two words to describe something in the photo</li>
+            <li>Decide what your subject and main verb will be (these may or may not be the words provided)</li>
+            <li>Nouns are provided in singular form and verbs in base form - you can change these forms if needed</li>
+          </ol>
+        </div>
+        
+        <form action="/writing/submit" method="POST">
+          <input type="hidden" name="words" value="<%= words %>">
+          <div class="mb-3">
+            <label for="sentence" class="form-label">Your Sentence:</label>
+            <textarea class="form-control" id="sentence" name="sentence" rows="3" required></textarea>
+          </div>
+          <div class="d-flex justify-content-between">
+            <a href="/writing" class="btn btn-secondary">Back to Writing</a>
+            <button type="submit" class="btn btn-primary">Submit Answer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

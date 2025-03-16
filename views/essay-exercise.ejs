@@ -1,0 +1,62 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Opinion Essay Exercise</h1>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">Write an Opinion Essay</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="alert alert-info mb-4">
+          <h6>Essay Prompt:</h6>
+          <p class="mb-2"><strong><%= essay.prompt %></strong></p>
+          <p class="small"><%= essay.instructions %></p>
+          <hr>
+          <p><strong>Topic:</strong> <%= essay.topic %></p>
+          <p class="small"><strong>Time Allowed:</strong> 30 minutes</p>
+          <p class="small"><strong>Word Count:</strong> Approximately 300 words</p>
+        </div>
+        
+        <div class="alert alert-light border mb-4">
+          <h6>Instructions:</h6>
+          <ol class="small">
+            <li>Begin with a clear thesis statement that expresses your opinion on the topic.</li>
+            <li>Develop 2-3 paragraphs that support your thesis with specific reasons and examples.</li>
+            <li>Use appropriate transition words to connect your ideas.</li>
+            <li>Write a strong conclusion that restates your opinion.</li>
+            <li>Check your grammar, spelling, and punctuation before submitting.</li>
+          </ol>
+        </div>
+        
+        <form action="/writing/essay-submit" method="POST">
+          <input type="hidden" name="essayId" value="<%= essay.id %>">
+          <div class="mb-3">
+            <label for="response" class="form-label">Your Essay:</label>
+            <textarea class="form-control" id="response" name="response" rows="12" required></textarea>
+            <div class="form-text text-end"><span id="wordCount">0</span> words</div>
+          </div>
+          <div class="d-flex justify-content-between">
+            <a href="/writing" class="btn btn-secondary">Back to Writing</a>
+            <button type="submit" class="btn btn-primary">Submit Essay</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Word count functionality
+  const textarea = document.getElementById('response');
+  const wordCountDisplay = document.getElementById('wordCount');
+  
+  textarea.addEventListener('input', function() {
+    const text = this.value;
+    const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+    wordCountDisplay.textContent = wordCount;
+  });
+</script>
+
+<%- include('partials/footer') %>

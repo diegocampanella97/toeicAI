@@ -1,0 +1,96 @@
+<%- include('../partials/header', {title: title}) %>
+
+<div class="mb-3">
+  <a href="/statistics" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Statistics</a>
+</div>
+
+<h1 class="mb-4">Essay Exercise Details</h1>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">Exercise Information</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <p><strong>Date:</strong> <%= new Date(essayResponse.createdAt).toLocaleString() %></p>
+        <p><strong>Exercise Type:</strong> Opinion Essay (Question 8)</p>
+        <p><strong>Topic:</strong> <%= essay.topic %></p>
+        <p><strong>Word Count:</strong> <%= essayResponse.wordCount %> words</p>
+      </div>
+      <div class="col-md-6">
+        <p><strong>Overall Score:</strong>
+          <% for(let i = 1; i <= 5; i++) { %>
+            <i class="bi <%= i <= essayResponse.score ? 'bi-star-fill' : 'bi-star' %>"></i>
+          <% } %>
+          (<%= essayResponse.score %>/5)
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Organization:</strong>
+              <% for(let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= i <= essayResponse.organization ? 'bi-star-fill' : 'bi-star' %> small"></i>
+              <% } %>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Grammar:</strong>
+              <% for(let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= i <= essayResponse.grammar ? 'bi-star-fill' : 'bi-star' %> small"></i>
+              <% } %>
+            </p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Vocabulary:</strong>
+              <% for(let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= i <= essayResponse.vocabulary ? 'bi-star-fill' : 'bi-star' %> small"></i>
+              <% } %>
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Thesis Development:</strong>
+              <% for(let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= i <= essayResponse.thesisDevelopment ? 'bi-star-fill' : 'bi-star' %> small"></i>
+              <% } %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+    
+    <div class="mb-4">
+      <h6>Essay Prompt:</h6>
+      <div class="alert alert-light">
+        <p><strong><%= essay.prompt %></strong></p>
+        <p class="small"><%= essay.instructions %></p>
+      </div>
+    </div>
+
+    <h6>Your Essay:</h6>
+    <div class="alert alert-light">
+      <p style="white-space: pre-line"><%= essayResponse.response %></p>
+    </div>
+    
+    <hr>
+    
+    <div class="alert alert-info">
+      <h6>Feedback:</h6>
+      <p><%= essayResponse.feedback %></p>
+      
+      <% if (essayResponse.suggestions && essayResponse.suggestions.length > 0) { %>
+        <h6 class="mt-3">Suggestions for Improvement:</h6>
+        <ul>
+          <% essayResponse.suggestions.forEach(function(suggestion) { %>
+            <li><%= suggestion %></li>
+          <% }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

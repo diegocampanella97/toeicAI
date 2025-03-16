@@ -1,0 +1,79 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Email Response Exercise</h1>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">Respond to the Email</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card mb-3">
+          <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>From:</strong> <%= email.from %><br>
+                <strong>To:</strong> <%= email.to %><br>
+                <strong>Subject:</strong> <%= email.subject %>
+              </div>
+              <div>
+                <small class="text-muted"><%= email.date %></small>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <p><%= email.greeting %></p>
+            <% email.body.forEach(function(paragraph) { %>
+              <p><%= paragraph %></p>
+            <% }); %>
+            <p><%= email.closing %></p>
+            <p><%= email.signature %></p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="alert alert-info">
+          <p><strong>Instructions:</strong> Write a response to the email addressing the following tasks:</p>
+          <ul>
+            <% email.tasks.forEach(function(task) { %>
+              <li><%= task %></li>
+            <% }); %>
+          </ul>
+          <hr>
+          <p><strong>Targeted Skills:</strong></p>
+          <ul class="small">
+            <li>Organize your ideas in writing</li>
+            <li>Use appropriate connecting words</li>
+            <li>Write a variety of sentence types</li>
+            <li>Write grammatically correct sentences</li>
+            <li>Use appropriate vocabulary</li>
+            <li>Respond to all given tasks</li>
+          </ul>
+          <p class="small mt-2"><strong>Tips:</strong></p>
+          <ol class="small">
+            <li>Begin your email with an appropriate introduction</li>
+            <li>Keep your audience in mind and use appropriate language</li>
+            <li>Be sure to address all the tasks in your response</li>
+            <li>Use a variety of sentence structures</li>
+            <li>End with an appropriate closing</li>
+          </ol>
+        </div>
+        
+        <form action="/writing/email-submit" method="POST">
+          <input type="hidden" name="emailId" value="<%= email.id %>">
+          <div class="mb-3">
+            <label for="response" class="form-label">Your Response:</label>
+            <textarea class="form-control" id="response" name="response" rows="10" required></textarea>
+          </div>
+          <div class="d-flex justify-content-between">
+            <a href="/writing" class="btn btn-secondary">Back to Writing</a>
+            <button type="submit" class="btn btn-primary">Submit Response</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

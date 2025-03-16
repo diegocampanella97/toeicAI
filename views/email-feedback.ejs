@@ -1,0 +1,121 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Email Exercise Feedback</h1>
+
+<div class="card mb-4">
+  <div class="card-header bg-success text-white">
+    <h5 class="card-title mb-0">Your Submission</h5>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <h6>Original Email:</h6>
+        <div class="card mb-3">
+          <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>From:</strong> <%= email.from %><br>
+                <strong>To:</strong> <%= email.to %><br>
+                <strong>Subject:</strong> <%= email.subject %>
+              </div>
+              <div>
+                <small class="text-muted"><%= email.date %></small>
+              </div>
+            </div>
+          </div>
+          <div class="card-body small">
+            <p><%= email.greeting %></p>
+            <% email.body.forEach(function(paragraph) { %>
+              <p><%= paragraph %></p>
+            <% }); %>
+            <p><%= email.closing %></p>
+            <p><%= email.signature %></p>
+          </div>
+        </div>
+        
+        <h6>Required Tasks:</h6>
+        <ul class="list-group mb-3">
+          <% email.tasks.forEach(function(task) { %>
+            <li class="list-group-item <%= taskCompletion ? 'list-group-item-success' : 'list-group-item-danger' %>">
+              <%= task %>
+              <% if (taskCompletion) { %>
+                <i class="bi bi-check-circle-fill text-success float-end"></i>
+              <% } else { %>
+                <i class="bi bi-x-circle-fill text-danger float-end"></i>
+              <% } %>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+      
+      <div class="col-md-6">
+        <h6>Your Response:</h6>
+        <div class="card mb-3">
+          <div class="card-body">
+            <p style="white-space: pre-line;"><%= response %></p>
+          </div>
+        </div>
+        
+        <div class="alert <%= feedbackClass %>">
+          <div class="mb-2">
+            <strong>Overall Score: </strong>
+            <% for(let i = 1; i <= 5; i++) { %>
+              <i class="bi <%= i <= score ? 'bi-star-fill' : 'bi-star' %>"></i>
+            <% } %>
+            (<%= score %>/5)
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <strong>Organization:</strong>
+              <div>
+                <% for(let i = 1; i <= 5; i++) { %>
+                  <i class="bi <%= i <= organization ? 'bi-star-fill' : 'bi-star' %> small"></i>
+                <% } %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <strong>Grammar:</strong>
+              <div>
+                <% for(let i = 1; i <= 5; i++) { %>
+                  <i class="bi <%= i <= grammar ? 'bi-star-fill' : 'bi-star' %> small"></i>
+                <% } %>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <strong>Vocabulary:</strong>
+              <div>
+                <% for(let i = 1; i <= 5; i++) { %>
+                  <i class="bi <%= i <= vocabulary ? 'bi-star-fill' : 'bi-star' %> small"></i>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          
+          <p><strong>Feedback:</strong> <%= feedback %></p>
+          
+          <% if (suggestions && suggestions.length > 0) { %>
+            <div class="mt-3">
+              <strong>Suggestions for improvement:</strong>
+              <ul class="mt-2">
+                <% suggestions.forEach(function(suggestion) { %>
+                  <li><%= suggestion %></li>
+                <% }); %>
+              </ul>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    
+    <div class="d-flex justify-content-between mt-4">
+      <a href="/writing" class="btn btn-secondary">Back to Writing</a>
+      <div>
+        <a href="/statistics" class="btn btn-info me-2">View My Statistics</a>
+        <a href="/writing/email-exercise" class="btn btn-primary">Try Another Exercise</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
