@@ -1,0 +1,94 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Speaking Exercise Feedback</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Read Aloud Exercise Feedback</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert <%= feedbackClass %>">
+          <h5>Overall Score: <%= score %>/5</h5>
+          <p><%= feedback %></p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Text You Read</h6>
+          </div>
+          <div class="card-body">
+            <p class="lead"><%= speakingText.text %></p>
+            <p class="small text-muted">Topic: <%= speakingText.topic %> | Category: <%= speakingText.category %> | Word Count: <%= speakingText.wordCount %></p>
+          </div>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Your Recording</h6>
+          </div>
+          <div class="card-body text-center">
+            <audio controls src="<%= audioUrl %>"></audio>
+          </div>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Detailed Evaluation</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                  <div class="card-body text-center">
+                    <h5>Pronunciation</h5>
+                    <div class="display-4"><%= pronunciation %>/5</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                  <div class="card-body text-center">
+                    <h5>Intonation</h5>
+                    <div class="display-4"><%= intonation %>/5</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                  <div class="card-body text-center">
+                    <h5>Fluency</h5>
+                    <div class="display-4"><%= fluency %>/5</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <% if (suggestions && suggestions.length > 0) { %>
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Suggestions for Improvement</h6>
+          </div>
+          <div class="card-body">
+            <ul>
+              <% suggestions.forEach(function(suggestion) { %>
+                <li><%= suggestion %></li>
+              <% }); %>
+            </ul>
+          </div>
+        </div>
+        <% } %>
+        
+        <div class="d-flex justify-content-between">
+          <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+          <a href="/speaking/read-aloud" class="btn btn-primary">Try Another Exercise</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

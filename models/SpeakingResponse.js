@@ -1,43 +1,50 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-const Statistic = sequelize.define('Statistic', {
-  exerciseType: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      isIn: [['writing', 'email', 'speaking']]
-    }
-  },
-  wordPair: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    get() {
-      return this.getDataValue('wordPair').split(',');
-    },
-    set(val) {
-      this.setDataValue('wordPair', Array.isArray(val) ? val.join(',') : val);
-    }
-  },
-  sentence: {
-    type: DataTypes.TEXT,
+const SpeakingResponse = sequelize.define('SpeakingResponse', {
+  speakingTextId: {
+    type: DataTypes.INTEGER,
     allowNull: false
   },
-  score: {
+  audioUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  pronunciation: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     validate: {
       min: 0,
       max: 5
     }
   },
-  allWordsUsed: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false
+  intonation: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+  fluency: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: 0,
+      max: 5
+    }
+  },
+  score: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: {
+      min: 0,
+      max: 5
+    }
   },
   feedback: {
     type: DataTypes.TEXT,
-    allowNull: false
+    allowNull: true
   },
   suggestions: {
     type: DataTypes.TEXT,
@@ -51,7 +58,8 @@ const Statistic = sequelize.define('Statistic', {
     }
   }
 }, {
+  tableName: 'SpeakingResponses',
   timestamps: true
 });
 
-module.exports = Statistic;
+module.exports = SpeakingResponse;

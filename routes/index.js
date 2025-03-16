@@ -19,6 +19,11 @@ router.get('/writing', (req, res) => {
   res.render('writing', { title: 'TOEIC Writing Practice' });
 });
 
+// Speaking section route
+router.get('/speaking', (req, res) => {
+  res.render('speaking', { title: 'TOEIC Speaking Practice' });
+});
+
 // Generate a writing exercise
 router.get('/writing/exercise', async (req, res) => {
   try {
@@ -551,6 +556,204 @@ async function evaluateEssayResponse(response, essay) {
       suggestions: ["Please try again later."]
     };
   }
+}
+
+// Speaking read aloud exercise route
+router.get('/speaking/read-aloud', async (req, res) => {
+  try {
+    // Generate a random speaking text using OpenAI
+    const speakingText = await generateSpeakingText();
+    
+    res.render('speaking-read-aloud', {
+      title: 'Read Aloud Exercise',
+      speakingText: speakingText
+    });
+  } catch (error) {
+    console.error('Error generating speaking exercise:', error);
+    res.status(500).render('error', {
+      message: 'Failed to generate speaking exercise',
+      error: error
+    });
+  }
+});
+
+// Submit speaking response
+router.post('/speaking/submit-read-aloud', async (req, res) => {
+  const { speakingTextId, audioUrl } = req.body;
+  
+  try {
+    // Find the speaking text by ID
+    const SpeakingText = require('../models/SpeakingText');
+    const speakingText = await SpeakingText.findByPk(speakingTextId);
+    
+    if (!speakingText) {
+      return res.status(404).render('error', {
+        message: 'Speaking text not found',
+        error: { status: 404 }
+      });
+    }
+    
+    // In a real application, you would send the audio to a speech recognition service
+    // For this demo, we'll simulate an evaluation
+    const evaluation = simulateSpeakingEvaluation();
+    
+    // Determine feedback class based on evaluation
+    const feedbackClass = evaluation.score >= 4 ? 'alert-success' : 
+                         evaluation.score >= 2 ? 'alert-info' : 'alert-warning';
+    
+    // Save response statistics
+    const SpeakingResponse = require('../models/SpeakingResponse');
+    await SpeakingResponse.create({
+      speakingTextId: speakingText.id,
+      audioUrl: audioUrl,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      score: evaluation.score,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions
+    });
+    
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: speakingText,
+      audioUrl: audioUrl,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions,
+      score: evaluation.score,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      feedbackClass: feedbackClass
+    });
+  } catch (error) {
+    console.error('Error evaluating speaking response:', error);
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: await SpeakingText.findByPk(speakingTextId),
+      audioUrl: audioUrl,
+      feedback: 'We encountered an error while evaluating your response. Please try again.',
+      feedbackClass: 'alert-danger',
+      score: 0,
+      pronunciation: 0,
+      intonation: 0,
+      fluency: 0,
+      suggestions: []
+    });
+  }
+});
+
+// Function to generate a speaking text using OpenAI
+async function generateSpeakingText() {
+  try {
+    // Categories for speaking exercises
+    const categories = [
+      'advertisement',
+      'announcement',
+      'news',
+      'tour',
+      'traffic',
+      'weather',
+      'entertainment',
+      'health',
+      'housing',
+      'shopping',
+      'travel'
+    ];
+    
+    // Select a random category
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    
+    // Generate speaking text content using OpenAI
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an assistant specializing in TOEIC exam preparation. Generate a short text for TOEIC speaking questions 1-2, where students must read a text aloud. The text should be written in common everyday language and deal with familiar topics."
+        },
+        {
+          role: "user",
+          content: `Generate a short text (approximately 100 words) for a TOEIC speaking exercise in the category: ${category}. The text should represent something that would normally be read aloud, such as an announcement, a radio or television advertisement, or the introduction of a speaker. Return the text as a JSON object with these fields: text (the text to read aloud), topic (short topic name), wordCount (number of words), category (the category of the text), difficulty (easy, medium, or hard).`
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const textData = JSON.parse(response.choices[0].message.content);
+    
+    // Save the speaking text to the database
+    const SpeakingText = require('../models/SpeakingText');
+    const speakingText = await SpeakingText.create({
+      text: textData.text,
+      topic: textData.topic,
+      wordCount: textData.wordCount,
+      category: textData.category,
+      difficulty: textData.difficulty
+    });
+    
+    return speakingText;
+  } catch (error) {
+    console.error('Error generating speaking text:', error);
+    // Return a fallback speaking text if API call fails
+    const SpeakingText = require('../models/SpeakingText');
+    return SpeakingText.create({
+      text: "Welcome to our annual company conference. Today, we'll be discussing the latest developments in our industry and sharing strategies for growth in the coming year. Our keynote speaker, Dr. Jane Smith, will present her research on emerging market trends. Please silence your phones and enjoy the presentations.",
+      topic: "Company Conference",
+      wordCount: 47,
+      category: "announcement",
+      difficulty: "medium"
+    });
+  }
+}
+
+// Function to simulate speaking evaluation
+// In a real application, this would be replaced with a call to a speech recognition API
+function simulateSpeakingEvaluation() {
+  // Generate random scores between 3 and 5 for a more positive experience
+  const pronunciation = Math.floor(Math.random() * 3) + 3;
+  const intonation = Math.floor(Math.random() * 3) + 3;
+  const fluency = Math.floor(Math.random() * 3) + 3;
+  
+  // Calculate overall score (average of the three scores)
+  const score = Math.round((pronunciation + intonation + fluency) / 3);
+  
+  // Generate feedback based on score
+  let message = "";
+  let suggestions = [];
+  
+  if (score >= 4) {
+    message = "Excellent job! Your reading was clear and well-paced with good pronunciation and intonation.";
+    suggestions = [
+      "Continue practicing with more complex texts",
+      "Work on maintaining consistent intonation throughout longer passages",
+      "Practice emphasizing key words for even better clarity"
+    ];
+  } else if (score >= 3) {
+    message = "Good job! Your reading was generally clear with some minor issues in pronunciation or pacing.";
+    suggestions = [
+      "Practice reading aloud daily to improve fluency",
+      "Pay attention to sentence stress and intonation patterns",
+      "Work on pronouncing challenging words more clearly"
+    ];
+  } else {
+    message = "You've made a good start. With more practice, you can improve your clarity and fluency.";
+    suggestions = [
+      "Practice reading aloud slowly, focusing on clear pronunciation",
+      "Record yourself and listen for areas to improve",
+      "Work on proper pausing at punctuation marks",
+      "Practice word stress patterns in English"
+    ];
+  }
+  
+  return {
+    pronunciation,
+    intonation,
+    fluency,
+    score,
+    message,
+    suggestions
+  };
 }
 
 module.exports = router;
