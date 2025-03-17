@@ -129,7 +129,7 @@ function checkWordUsage(sentence, wordArray) {
 async function generateWordPair() {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
@@ -156,7 +156,7 @@ async function generateWordPair() {
 async function evaluateSentence(sentence, wordArray) {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
@@ -284,7 +284,7 @@ async function generateEmailExercise() {
     
     // Generate email content using OpenAI
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
@@ -486,7 +486,7 @@ async function generateEssayExercise() {
     
     // Generate essay prompt using OpenAI
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
@@ -667,7 +667,7 @@ async function generateSpeakingText() {
     
     // Generate speaking text content using OpenAI
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
