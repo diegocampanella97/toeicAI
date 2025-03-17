@@ -1,0 +1,202 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Personal Experience Questions</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Speaking Exercise: Questions 4-6</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <p><strong>Instructions:</strong></p>
+          <p>You will answer three related questions about a personal experience or familiar topic. There is no preparation time.</p>
+          <p>For Questions 4-5, you will have 15 seconds to answer each question. For Question 6, you will have 30 seconds to answer.</p>
+          <p>Click "Start Exercise" when you're ready to begin.</p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Topic: <%= topic %></h6>
+          </div>
+          <div class="card-body">
+            <div id="question-container">
+              <div id="question-1" class="question-item">
+                <h5>Question 4</h5>
+                <p class="lead"><%= questions[0] %></p>
+              </div>
+              <div id="question-2" class="question-item d-none">
+                <h5>Question 5</h5>
+                <p class="lead"><%= questions[1] %></p>
+              </div>
+              <div id="question-3" class="question-item d-none">
+                <h5>Question 6</h5>
+                <p class="lead"><%= questions[2] %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alert alert-light border">
+          <p><strong>Targeted Skills:</strong></p>
+          <ul class="small">
+            <li>Express your opinion clearly, supporting it with details</li>
+            <li>Understand the main topic and identify key words</li>
+            <li>Select and use appropriate vocabulary</li>
+            <li>Describe frequency or duration of events or activities</li>
+            <li>Provide details and explanations about your opinion</li>
+          </ul>
+          <p class="small mt-2"><strong>Tips:</strong></p>
+          <ol class="small">
+            <li>First, quickly analyze the prompt and questions. What key words are in the prompt? What do the questions ask for?</li>
+            <li>Think about what you want to talk about. Immediately think of key words that will help you answer quickly</li>
+            <li>Begin your answer with a topic sentence that restates the prompt and adds your own information</li>
+            <li>Explain the main reason for your answer and provide personal details to support this reason</li>
+          </ol>
+        </div>
+        
+        <div id="timer-container" class="text-center mb-3">
+          <div id="speaking-timer" class="d-none">
+            <h4>Speaking Time</h4>
+            <h2 id="speak-countdown">15</h2>
+            <p id="current-question-text">Answer Question 4</p>
+          </div>
+        </div>
+        
+        <div id="audio-controls" class="text-center mb-3 d-none">
+          <div class="alert alert-warning">
+            <p><i class="bi bi-mic-fill"></i> Recording in progress...</p>
+          </div>
+          <audio id="audio-playback" controls class="d-none"></audio>
+        </div>
+        
+        <form id="speaking-form" action="/speaking/submit-personal-questions" method="POST" class="d-none">
+          <input type="hidden" name="topicId" value="<%= topicId %>">
+          <input type="hidden" name="topic" value="<%= topic %>">
+          <input type="hidden" name="audioUrl" id="audio-url">
+          <div class="d-flex justify-content-between">
+            <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+            <button type="submit" class="btn btn-primary">Submit Recording</button>
+          </div>
+        </form>
+        
+        <div id="control-buttons" class="d-flex justify-content-between">
+          <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+          <button id="start-exercise-btn" class="btn btn-primary">Start Exercise</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const startExerciseBtn = document.getElementById('start-exercise-btn');
+    const speakTimer = document.getElementById('speaking-timer');
+    const speakCountdown = document.getElementById('speak-countdown');
+    const currentQuestionText = document.getElementById('current-question-text');
+    const audioControls = document.getElementById('audio-controls');
+    const speakingForm = document.getElementById('speaking-form');
+    const controlButtons = document.getElementById('control-buttons');
+    const audioPlayback = document.getElementById('audio-playback');
+    const audioUrlInput = document.getElementById('audio-url');
+    
+    const question1 = document.getElementById('question-1');
+    const question2 = document.getElementById('question-2');
+    const question3 = document.getElementById('question-3');
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    let currentQuestion = 1;
+    
+    // Start exercise and recording
+    startExerciseBtn.addEventListener('click', function() {
+      startExerciseBtn.classList.add('d-none');
+      speakTimer.classList.remove('d-none');
+      audioControls.classList.remove('d-none');
+      
+      // Request microphone access
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
+          
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayback.src = audioUrl;
+            audioPlayback.classList.remove('d-none');
+            audioUrlInput.value = audioUrl;
+            
+            // Stop all tracks in the stream
+            stream.getTracks().forEach(track => track.stop());
+          };
+          
+          // Start recording
+          audioChunks = [];
+          mediaRecorder.start();
+          
+          // Start with Question 4 (15 seconds)
+          startQuestionTimer(1, 15);
+        })
+        .catch(error => {
+          console.error('Error accessing microphone:', error);
+          alert('Error accessing microphone. Please ensure your browser has permission to use the microphone.');
+        });
+    });
+    
+    function startQuestionTimer(questionNum, seconds) {
+      currentQuestion = questionNum;
+      
+      // Update UI to show current question
+      if (questionNum === 1) {
+        question1.classList.remove('d-none');
+        question2.classList.add('d-none');
+        question3.classList.add('d-none');
+        currentQuestionText.textContent = 'Answer Question 4';
+      } else if (questionNum === 2) {
+        question1.classList.add('d-none');
+        question2.classList.remove('d-none');
+        question3.classList.add('d-none');
+        currentQuestionText.textContent = 'Answer Question 5';
+      } else {
+        question1.classList.add('d-none');
+        question2.classList.add('d-none');
+        question3.classList.remove('d-none');
+        currentQuestionText.textContent = 'Answer Question 6';
+      }
+      
+      // Set timer
+      let timeLeft = seconds;
+      speakCountdown.textContent = timeLeft;
+      
+      const interval = setInterval(function() {
+        timeLeft--;
+        speakCountdown.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          
+          // Move to next question or finish
+          if (questionNum === 1) {
+            startQuestionTimer(2, 15); // Question 5 (15 seconds)
+          } else if (questionNum === 2) {
+            startQuestionTimer(3, 30); // Question 6 (30 seconds)
+          } else {
+            // End of exercise
+            mediaRecorder.stop();
+            speakTimer.classList.add('d-none');
+            controlButtons.classList.add('d-none');
+            speakingForm.classList.remove('d-none');
+          }
+        }
+      }, 1000);
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

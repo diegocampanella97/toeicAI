@@ -993,4 +993,219 @@ function simulatePhotoDescriptionEvaluation() {
   };
 }
 
+// Speaking personal questions exercise route
+router.get('/speaking/personal-questions', async (req, res) => {
+  try {
+    // Generate a random personal questions topic using OpenAI
+    const personalQuestionTopic = await generatePersonalQuestionTopic();
+    
+    res.render('speaking-personal-questions', {
+      title: 'Personal Experience Questions',
+      topicId: personalQuestionTopic.id,
+      topic: personalQuestionTopic.topic,
+      questions: personalQuestionTopic.questions
+    });
+  } catch (error) {
+    console.error('Error generating personal questions exercise:', error);
+    res.status(500).render('error', {
+      message: 'Failed to generate personal questions exercise',
+      error: error
+    });
+  }
+});
+
+// Submit personal questions response
+router.post('/speaking/submit-personal-questions', async (req, res) => {
+  const { topicId, topic, audioUrl } = req.body;
+  
+  try {
+    // In a real application, you would send the audio to a speech recognition service
+    // For this demo, we'll simulate an evaluation with additional criteria for personal questions
+    const evaluation = simulatePersonalQuestionsEvaluation();
+    
+    // Determine feedback class based on evaluation
+    const feedbackClass = evaluation.score >= 4 ? 'alert-success' : 
+                         evaluation.score >= 2 ? 'alert-info' : 'alert-warning';
+    
+    // Save response statistics
+    const SpeakingResponse = require('../models/SpeakingResponse');
+    await SpeakingResponse.create({
+      speakingTextId: 0, // No text ID for personal questions
+      audioUrl: audioUrl,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      score: evaluation.score,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions
+    });
+    
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Personal Questions - ${topic}]`,
+        topic: 'Personal Experience Questions',
+        category: topic
+      },
+      audioUrl: audioUrl,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions,
+      score: evaluation.score,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      vocabulary: evaluation.vocabulary,
+      grammar: evaluation.grammar,
+      feedbackClass: feedbackClass
+    });
+  } catch (error) {
+    console.error('Error evaluating personal questions response:', error);
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Personal Questions - ${topic}]`,
+        topic: 'Personal Experience Questions',
+        category: topic
+      },
+      audioUrl: audioUrl,
+      feedback: 'We encountered an error while evaluating your response. Please try again.',
+      feedbackClass: 'alert-danger',
+      score: 0,
+      pronunciation: 0,
+      intonation: 0,
+      fluency: 0,
+      vocabulary: 0,
+      grammar: 0,
+      suggestions: []
+    });
+  }
+});
+
+// Function to generate a personal question topic using OpenAI
+async function generatePersonalQuestionTopic() {
+  try {
+    // Categories for personal questions exercises
+    const categories = [
+      'personal_interests',
+      'community_life',
+      'marketing_research',
+      'work_life',
+      'education',
+      'travel',
+      'technology',
+      'health',
+      'entertainment'
+    ];
+    
+    // Select a random category
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    
+    // Generate personal questions using OpenAI
+    const response = await openai.chat.completions.create({
+      model: "o3-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an assistant specializing in TOEIC exam preparation. Generate a set of three related questions for TOEIC speaking questions 4-6, where students must answer questions about a personal experience or familiar topic."
+        },
+        {
+          role: "user",
+          content: `Generate a set of three related questions for a TOEIC speaking exercise in the category: ${category}. The questions should be about a personal experience or familiar topic. The first two questions should be simple and require a short answer (15 seconds). The third question should be more complex and require a longer answer (30 seconds). Return the questions as a JSON object with these fields: topic (short topic name), questions (array of 3 questions), category (the category of the questions).`
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const questionData = JSON.parse(response.choices[0].message.content);
+    
+    // Save the personal question topic to the database
+    const PersonalQuestionTopic = require('../models/PersonalQuestionTopic');
+    
+    // Ensure category is one of the allowed values
+    const allowedCategories = ['personal_interests', 'community_life', 'marketing_research', 'work_life', 'education', 'travel', 'technology', 'health', 'entertainment'];
+    let topicCategory = questionData.category.toLowerCase().replace(' ', '_');
+    
+    // If category is not in allowed list, map it to a similar one or use 'personal_interests' as default
+    if (!allowedCategories.includes(topicCategory)) {
+      topicCategory = 'personal_interests';
+    }
+    
+    const personalQuestionTopic = await PersonalQuestionTopic.create({
+      topic: questionData.topic,
+      questions: questionData.questions,
+      category: topicCategory
+    });
+    
+    return personalQuestionTopic;
+  } catch (error) {
+    console.error('Error generating personal questions:', error);
+    // Return fallback questions if API call fails
+    const PersonalQuestionTopic = require('../models/PersonalQuestionTopic');
+    return PersonalQuestionTopic.create({
+      topic: 'Work-Life Balance',
+      questions: [
+        'How many hours do you typically work each day?',
+        'What do you usually do to relax after work?',
+        'Do you think it\'s important to maintain a balance between work and personal life? Why or why not?'
+      ],
+      category: 'work_life'
+    });
+  }
+}
+
+// Function to simulate personal questions evaluation
+function simulatePersonalQuestionsEvaluation() {
+  // Generate random scores between 3 and 5 for a more positive experience
+  const pronunciation = Math.floor(Math.random() * 3) + 3;
+  const intonation = Math.floor(Math.random() * 3) + 3;
+  const fluency = Math.floor(Math.random() * 3) + 3;
+  const vocabulary = Math.floor(Math.random() * 3) + 3;
+  const grammar = Math.floor(Math.random() * 3) + 3;
+  const relevance = Math.floor(Math.random() * 3) + 3;
+  
+  // Calculate overall score (average of the six scores)
+  const score = Math.round((pronunciation + intonation + fluency + vocabulary + grammar + relevance) / 6);
+  
+  // Generate feedback based on score
+  let message = "";
+  let suggestions = [];
+  
+  if (score >= 4) {
+    message = "Excellent job! Your responses were clear, detailed, and well-structured with good pronunciation and appropriate vocabulary.";
+    suggestions = [
+      "Continue practicing with more complex topics",
+      "Work on providing even more specific examples in your responses",
+      "Practice using a wider range of transition phrases",
+      "Try to incorporate more advanced vocabulary in your answers"
+    ];
+  } else if (score >= 3) {
+    message = "Good job! Your responses addressed the questions with generally clear pronunciation and appropriate vocabulary.";
+    suggestions = [
+      "Practice organizing your responses more logically",
+      "Work on using more precise vocabulary to express your opinions",
+      "Pay attention to verb tenses when describing past experiences",
+      "Try to speak at a more natural pace"
+    ];
+  } else {
+    message = "You've made a good start. With more practice, you can improve your speaking skills.";
+    suggestions = [
+      "Start by understanding the main point of each question before answering",
+      "Practice using simple, clear sentences to express your opinions",
+      "Work on basic vocabulary for common topics and experiences",
+      "Record yourself and listen for areas to improve"
+    ];
+  }
+  
+  return {
+    pronunciation,
+    intonation,
+    fluency,
+    vocabulary,
+    grammar,
+    score,
+    message,
+    suggestions
+  };
+}
+
 module.exports = router;
