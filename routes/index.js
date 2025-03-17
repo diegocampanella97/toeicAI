@@ -628,6 +628,7 @@ router.post('/speaking/submit-read-aloud', async (req, res) => {
     });
   } catch (error) {
     console.error('Error evaluating speaking response:', error);
+    const SpeakingText = require('../models/SpeakingText');
     res.render('speaking-feedback', {
       title: 'Speaking Exercise Feedback',
       speakingText: await SpeakingText.findByPk(speakingTextId),
@@ -661,8 +662,8 @@ async function generateSpeakingText() {
       'travel'
     ];
     
-    // Select a random category
-    const category = categories[Math.floor(Math.random() * categories.length)];
+    // Select a random category for the prompt
+    const promptCategory = categories[Math.floor(Math.random() * categories.length)];
     
     // Generate speaking text content using OpenAI
     const response = await openai.chat.completions.create({
@@ -674,7 +675,7 @@ async function generateSpeakingText() {
         },
         {
           role: "user",
-          content: `Generate a short text (approximately 100 words) for a TOEIC speaking exercise in the category: ${category}. The text should represent something that would normally be read aloud, such as an announcement, a radio or television advertisement, or the introduction of a speaker. Return the text as a JSON object with these fields: text (the text to read aloud), topic (short topic name), wordCount (number of words), category (the category of the text), difficulty (easy, medium, or hard).`
+          content: `Generate a short text (approximately 100 words) for a TOEIC speaking exercise in the category: ${promptCategory}. The text should represent something that would normally be read aloud, such as an announcement, a radio or television advertisement, or the introduction of a speaker. Return the text as a JSON object with these fields: text (the text to read aloud), topic (short topic name), wordCount (number of words), category (the category of the text), difficulty (easy, medium, or hard).`
         }
       ],
       response_format: { type: "json_object" }
@@ -684,13 +685,35 @@ async function generateSpeakingText() {
     
     // Save the speaking text to the database
     const SpeakingText = require('../models/SpeakingText');
+      
+    // Ensure category is one of the allowed values
+    const allowedCategories = ['advertisement', 'announcement', 'news', 'tour', 'traffic', 'weather', 'entertainment', 'health', 'housing', 'shopping', 'travel'];
+    let category = textData.category.toLowerCase();
+    
+    // If category is not in allowed list, map it to a similar one or use 'announcement' as default
+    if (!allowedCategories.includes(category)) {
+      // Map common non-allowed categories to allowed ones
+      const categoryMap = {
+        'real estate': 'housing',
+        'business': 'announcement',
+        'education': 'announcement',
+        'technology': 'news',
+        'food': 'shopping',
+        'restaurant': 'entertainment'
+      };
+      
+      category = categoryMap[category.toLowerCase()] || 'announcement';
+    }
+    
     const speakingText = await SpeakingText.create({
       text: textData.text,
       topic: textData.topic,
       wordCount: textData.wordCount,
-      category: textData.category,
-      difficulty: textData.difficulty
+      category: category,
+      difficulty: textData.difficulty || 'medium'
     });
+    
+    return speakingText;
     
     return speakingText;
   } catch (error) {

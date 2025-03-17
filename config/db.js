@@ -13,8 +13,8 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log('SQLite Database Connected');
     
-    // Sync all models
-    await sequelize.sync();
+    // Sync all models without force option to preserve data
+    await sequelize.sync({ force: false });
     console.log('All models were synchronized successfully');
   } catch (error) {
     console.error(`Database Error: ${error.message}`);

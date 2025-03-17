@@ -13,6 +13,7 @@ const SpeakingText = sequelize.define('SpeakingText', {
   difficulty: {
     type: DataTypes.STRING,
     allowNull: false,
+    defaultValue: 'medium',
     validate: {
       isIn: [['easy', 'medium', 'hard']]
     }
