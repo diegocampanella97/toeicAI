@@ -1182,16 +1182,16 @@ function simulatePersonalQuestionsEvaluation() {
     message = "Good job! Your responses addressed the questions with generally clear pronunciation and appropriate vocabulary.";
     suggestions = [
       "Practice organizing your responses more logically",
-      "Work on using more precise vocabulary to express your opinions",
-      "Pay attention to verb tenses when describing past experiences",
+      "Work on using more precise vocabulary",
+      "Pay attention to verb tenses when describing experiences",
       "Try to speak at a more natural pace"
     ];
   } else {
     message = "You've made a good start. With more practice, you can improve your speaking skills.";
     suggestions = [
-      "Start by understanding the main point of each question before answering",
-      "Practice using simple, clear sentences to express your opinions",
-      "Work on basic vocabulary for common topics and experiences",
+      "Start by identifying the key parts of each question before answering",
+      "Practice using simple, clear sentences",
+      "Work on basic vocabulary for expressing opinions and experiences",
       "Record yourself and listen for areas to improve"
     ];
   }
@@ -1202,6 +1202,448 @@ function simulatePersonalQuestionsEvaluation() {
     fluency,
     vocabulary,
     grammar,
+    relevance,
+    score,
+    message,
+    suggestions
+  };
+}
+
+// Function to generate a schedule agenda using OpenAI
+async function generateScheduleAgenda() {
+  try {
+    // Types of schedule agendas
+    const scheduleTypes = [
+      'meeting_agenda',
+      'travel_itinerary',
+      'conference_schedule',
+      'tour_schedule'
+    ];
+    
+    // Select a random type
+    const scheduleType = scheduleTypes[Math.floor(Math.random() * scheduleTypes.length)];
+    
+    // Generate schedule agenda content using OpenAI
+    const response = await openai.chat.completions.create({
+      model: "o3-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an assistant specializing in TOEIC exam preparation. Generate a schedule or agenda for TOEIC speaking questions 7-9, where students must respond to questions based on information in a schedule, agenda, itinerary, or timetable."
+        },
+        {
+          role: "user",
+          content: `Generate a ${scheduleType.replace('_', ' ')} for a TOEIC speaking exercise. Return the result as a JSON object with these fields: title (descriptive title), content (array of objects, each with key-value pairs representing schedule items), questions (array of 3 questions about the schedule), questionTypes (array of 3 question types). The questions should require the test-taker to locate and summarize information from the schedule. Question types should be one of: 'Information Location', 'Time/Date Confirmation', 'Detail Explanation', 'Comparison', or 'Summary'. Make the schedule realistic and professional.`
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const scheduleData = JSON.parse(response.choices[0].message.content);
+    
+    // Save the schedule agenda to the database
+    const ScheduleAgenda = require('../models/ScheduleAgenda');
+    
+    const scheduleAgenda = await ScheduleAgenda.create({
+      title: scheduleData.title,
+      type: scheduleType,
+      content: scheduleData.content,
+      questions: scheduleData.questions,
+      questionTypes: scheduleData.questionTypes
+    });
+    
+    return scheduleAgenda;
+  } catch (error) {
+    console.error('Error generating schedule agenda:', error);
+    // Return fallback schedule agenda if API call fails
+    const ScheduleAgenda = require('../models/ScheduleAgenda');
+    
+    // Create a fallback schedule based on the type
+    const fallbackSchedule = {
+      title: 'Team Project Planning Meeting',
+      type: 'meeting_agenda',
+      content: [
+        { 'Time': '9:00 AM', 'Activity': 'Welcome and Introduction' },
+        { 'Time': '9:15 AM', 'Activity': 'Project Overview' },
+        { 'Time': '10:00 AM', 'Activity': 'Task Assignment' },
+        { 'Time': '10:45 AM', 'Activity': 'Break' },
+        { 'Time': '11:00 AM', 'Activity': 'Timeline Discussion' },
+        { 'Time': '12:00 PM', 'Activity': 'Lunch' },
+        { 'Time': '1:00 PM', 'Activity': 'Budget Review' },
+        { 'Time': '2:00 PM', 'Activity': 'Q&A Session' },
+        { 'Time': '3:00 PM', 'Activity': 'Closing Remarks' }
+      ],
+      questions: [
+        'What time is the Task Assignment scheduled to begin?',
+        'How long is the lunch break?',
+        'Could you summarize the activities scheduled for the morning session?'
+      ],
+      questionTypes: [
+        'Information Location',
+        'Time/Date Confirmation',
+        'Summary'
+      ]
+    };
+    
+    return ScheduleAgenda.create(fallbackSchedule);
+  }
+}
+
+// Schedule questions exercise route
+router.get('/speaking/schedule-questions', async (req, res) => {
+  try {
+    // Generate a random schedule agenda using OpenAI
+    const scheduleAgenda = await generateScheduleAgenda();
+    
+    res.render('speaking-schedule-questions', {
+      title: 'Schedule Questions',
+      scheduleAgenda: scheduleAgenda
+    });
+  } catch (error) {
+    console.error('Error generating schedule questions exercise:', error);
+    res.status(500).render('error', {
+      message: 'Failed to generate schedule questions exercise',
+      error: error
+    });
+  }
+});
+
+// Submit schedule questions response
+router.post('/speaking/submit-schedule-questions', async (req, res) => {
+  const { scheduleAgendaId, title, type, audioUrl } = req.body;
+  
+  try {
+    // In a real application, you would send the audio to a speech recognition service
+    // For this demo, we'll simulate an evaluation with additional criteria for schedule questions
+    const evaluation = simulateScheduleQuestionsEvaluation();
+    
+    // Determine feedback class based on evaluation
+    const feedbackClass = evaluation.score >= 4 ? 'alert-success' : 
+                         evaluation.score >= 2 ? 'alert-info' : 'alert-warning';
+    
+    // Save response statistics
+    const SpeakingResponse = require('../models/SpeakingResponse');
+    await SpeakingResponse.create({
+      speakingTextId: 0, // No text ID for schedule questions
+      audioUrl: audioUrl,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      score: evaluation.score,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions
+    });
+    
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Schedule Questions - ${title}]`,
+        topic: 'Schedule Questions',
+        category: type
+      },
+      audioUrl: audioUrl,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions,
+      score: evaluation.score,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      vocabulary: evaluation.vocabulary,
+      grammar: evaluation.grammar,
+      feedbackClass: feedbackClass
+    });
+  } catch (error) {
+    console.error('Error evaluating schedule questions response:', error);
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Schedule Questions - ${title}]`,
+        topic: 'Schedule Questions',
+        category: type
+      },
+      audioUrl: audioUrl,
+      feedback: 'We encountered an error while evaluating your response. Please try again.',
+      feedbackClass: 'alert-danger',
+      score: 0,
+      pronunciation: 0,
+      intonation: 0,
+      fluency: 0,
+      vocabulary: 0,
+      grammar: 0,
+      suggestions: []
+    });
+  }
+});
+
+// Function to simulate schedule questions evaluation
+function simulateScheduleQuestionsEvaluation() {
+  // Generate random scores between 3 and 5 for a more positive experience
+  const pronunciation = Math.floor(Math.random() * 3) + 3;
+  const intonation = Math.floor(Math.random() * 3) + 3;
+  const fluency = Math.floor(Math.random() * 3) + 3;
+  const vocabulary = Math.floor(Math.random() * 3) + 3;
+  const grammar = Math.floor(Math.random() * 3) + 3;
+  const accuracy = Math.floor(Math.random() * 3) + 3;
+  
+  // Calculate overall score (average of the six scores)
+  const score = Math.round((pronunciation + intonation + fluency + vocabulary + grammar + accuracy) / 6);
+  
+  // Generate feedback based on score
+  let message = "";
+  let suggestions = [];
+  
+  if (score >= 4) {
+    message = "Excellent job! You accurately located and conveyed the information from the schedule with clear pronunciation and appropriate vocabulary.";
+    suggestions = [
+      "Continue practicing with more complex schedules and agendas",
+      "Work on summarizing information more concisely",
+      "Practice using a wider range of transition phrases",
+      "Try to incorporate more specific vocabulary related to schedules and planning"
+    ];
+  } else if (score >= 3) {
+    message = "Good job! You were able to find most of the relevant information and communicate it with generally clear pronunciation.";
+    suggestions = [
+      "Practice scanning schedules more quickly to locate specific information",
+      "Work on using more precise vocabulary when describing times and events",
+      "Pay attention to prepositions when describing schedule details",
+      "Try to speak at a more natural pace when giving information"
+    ];
+  } else {
+    message = "You've made a good start. With more practice, you can improve your ability to respond to schedule-based questions.";
+    suggestions = [
+      "Practice identifying key information in schedules and agendas",
+      "Learn common phrases for describing times, locations, and events",
+      "Work on basic vocabulary for schedules and planning",
+      "Practice organizing your response in a logical order"
+    ];
+  }
+  
+  return {
+    pronunciation,
+    intonation,
+    fluency,
+    vocabulary,
+    grammar,
+    accuracy,
+    score,
+    message,
+    suggestions
+  };
+}
+
+// Voicemail problem exercise route
+router.get('/speaking/voicemail-problem', async (req, res) => {
+  try {
+    // Generate a random voicemail problem using OpenAI
+    const voicemailProblem = await generateVoicemailProblem();
+    
+    res.render('speaking-voicemail-problem', {
+      title: 'Respond to a Voicemail Problem',
+      voicemailProblem: voicemailProblem
+    });
+  } catch (error) {
+    console.error('Error generating voicemail problem exercise:', error);
+    res.status(500).render('error', {
+      message: 'Failed to generate voicemail problem exercise',
+      error: error
+    });
+  }
+});
+
+// Submit voicemail problem response
+router.post('/speaking/submit-voicemail-problem', async (req, res) => {
+  const { voicemailProblemId, audioUrl } = req.body;
+  
+  try {
+    // Find the voicemail problem by ID
+    const VoicemailProblem = require('../models/VoicemailProblem');
+    const voicemailProblem = await VoicemailProblem.findByPk(voicemailProblemId);
+    
+    if (!voicemailProblem) {
+      return res.status(404).render('error', {
+        message: 'Voicemail problem not found',
+        error: { status: 404 }
+      });
+    }
+    
+    // In a real application, you would send the audio to a speech recognition service
+    // For this demo, we'll simulate an evaluation with additional criteria for voicemail problems
+    const evaluation = simulateVoicemailProblemEvaluation();
+    
+    // Determine feedback class based on evaluation
+    const feedbackClass = evaluation.score >= 4 ? 'alert-success' : 
+                         evaluation.score >= 2 ? 'alert-info' : 'alert-warning';
+    
+    // Save response statistics
+    const SpeakingResponse = require('../models/SpeakingResponse');
+    await SpeakingResponse.create({
+      speakingTextId: 0, // No text ID for voicemail problems
+      audioUrl: audioUrl,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      score: evaluation.score,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions
+    });
+    
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Voicemail Problem - ${voicemailProblem.title}]`,
+        topic: 'Voicemail Problem Response',
+        category: voicemailProblem.category
+      },
+      audioUrl: audioUrl,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions,
+      score: evaluation.score,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      vocabulary: evaluation.vocabulary,
+      grammar: evaluation.grammar,
+      problemSolving: evaluation.problemSolving,
+      feedbackClass: feedbackClass
+    });
+  } catch (error) {
+    console.error('Error evaluating voicemail problem response:', error);
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Voicemail Problem Response]`,
+        topic: 'Voicemail Problem Response',
+        category: 'problem_solving'
+      },
+      audioUrl: audioUrl,
+      feedback: 'We encountered an error while evaluating your response. Please try again.',
+      feedbackClass: 'alert-danger',
+      score: 0,
+      pronunciation: 0,
+      intonation: 0,
+      fluency: 0,
+      vocabulary: 0,
+      grammar: 0,
+      problemSolving: 0,
+      suggestions: []
+    });
+  }
+});
+
+// Function to generate a voicemail problem using OpenAI
+async function generateVoicemailProblem() {
+  try {
+    // Categories for voicemail problem exercises
+    const categories = [
+      'rental_housing',
+      'office_space',
+      'deliveries',
+      'travel',
+      'customer_service',
+      'class_information'
+    ];
+    
+    // Select a random category
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    
+    // Generate voicemail problem content using OpenAI
+    const response = await openai.chat.completions.create({
+      model: "o3-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an assistant specializing in TOEIC exam preparation. Generate a voicemail problem for TOEIC speaking question 10, where students must respond to a voicemail message that describes a problem and suggest a solution."
+        },
+        {
+          role: "user",
+          content: `Generate a voicemail problem for a TOEIC speaking exercise in the category: ${category}. The problem should be something that would be left in a voicemail message asking for help or a solution. Return the problem as a JSON object with these fields: title (short descriptive title), problem (the full voicemail message text), category (the category of the problem), possibleSolutions (array of 2-3 possible solutions that would be reasonable responses).`
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
+    
+    const problemData = JSON.parse(response.choices[0].message.content);
+    
+    // Save the voicemail problem to the database
+    const VoicemailProblem = require('../models/VoicemailProblem');
+    
+    const voicemailProblem = await VoicemailProblem.create({
+      title: problemData.title,
+      problem: problemData.problem,
+      category: category,
+      possibleSolutions: problemData.possibleSolutions,
+      difficulty: 'medium'
+    });
+    
+    return voicemailProblem;
+  } catch (error) {
+    console.error('Error generating voicemail problem:', error);
+    // Return a fallback voicemail problem if API call fails
+    const VoicemailProblem = require('../models/VoicemailProblem');
+    return VoicemailProblem.create({
+      title: 'Office Equipment Malfunction',
+      problem: 'Hello, this is Sarah from the marketing department. I\'m calling because our printer has stopped working, and we have an important client presentation this afternoon. We need to print 20 color copies of our proposal by 2:00 PM. Could you please help us resolve this issue or suggest an alternative solution? Please call me back at extension 4567 as soon as possible. Thank you.',
+      category: 'office_space',
+      possibleSolutions: [
+        'Contact IT support to fix the printer',
+        'Use another department\'s printer',
+        'Send the files to a nearby print shop'
+      ],
+      difficulty: 'medium'
+    });
+  }
+}
+
+// Function to simulate voicemail problem evaluation
+function simulateVoicemailProblemEvaluation() {
+  // Generate random scores between 3 and 5 for a more positive experience
+  const pronunciation = Math.floor(Math.random() * 3) + 3;
+  const intonation = Math.floor(Math.random() * 3) + 3;
+  const fluency = Math.floor(Math.random() * 3) + 3;
+  const vocabulary = Math.floor(Math.random() * 3) + 3;
+  const grammar = Math.floor(Math.random() * 3) + 3;
+  const problemSolving = Math.floor(Math.random() * 3) + 3;
+  
+  // Calculate overall score (average of the six scores)
+  const score = Math.round((pronunciation + intonation + fluency + vocabulary + grammar + problemSolving) / 6);
+  
+  // Generate feedback based on score
+  let message = "";
+  let suggestions = [];
+  
+  if (score >= 4) {
+    message = "Excellent job! You clearly understood the problem and provided a well-structured solution with good pronunciation and appropriate vocabulary.";
+    suggestions = [
+      "Continue practicing with more complex problems",
+      "Work on providing even more detailed step-by-step solutions",
+      "Practice using a wider range of professional expressions",
+      "Try to incorporate more specific vocabulary related to problem-solving"
+    ];
+  } else if (score >= 3) {
+    message = "Good job! You understood the main problem and offered a reasonable solution with generally clear pronunciation.";
+    suggestions = [
+      "Practice organizing your response more logically",
+      "Work on using more precise vocabulary when explaining solutions",
+      "Make sure to address all aspects of the problem",
+      "Try to speak at a more natural pace when giving your solution"
+    ];
+  } else {
+    message = "You've made a good start. With more practice, you can improve your ability to respond to problems.";
+    suggestions = [
+      "Practice identifying the key issues in a problem",
+      "Learn common phrases for offering solutions and assistance",
+      "Work on basic vocabulary for problem-solving scenarios",
+      "Practice organizing your response in a logical order"
+    ];
+  }
+  
+  return {
+    pronunciation,
+    intonation,
+    fluency,
+    vocabulary,
+    grammar,
+    problemSolving,
     score,
     message,
     suggestions

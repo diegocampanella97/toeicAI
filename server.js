@@ -31,6 +31,7 @@ app.use(session({
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/statistics', require('./routes/statistics'));
+app.use('/listening', require('./routes/listening'));
 
 // Start server
 app.listen(PORT, () => {

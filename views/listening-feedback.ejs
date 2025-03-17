@@ -1,0 +1,52 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Listening Exercise Feedback</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Part 1: Photographs - Feedback</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert <%= feedbackClass %>">
+          <h5><%= isCorrect ? 'Correct!' : 'Incorrect' %></h5>
+          <p><%= isCorrect ? 'You selected the correct description for the photograph.' : 'You selected an incorrect description for the photograph.' %></p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Photograph</h6>
+          </div>
+          <div class="card-body text-center photo-container">
+            <img src="<%= photo.imageUrl %>" alt="TOEIC Listening Photo" class="img-fluid mb-3 photo-display" style="max-height: 400px;">
+            <p class="small text-muted">Category: <%= photo.category %></p>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <h5 class="mb-3">Your Answer:</h5>
+          <div class="p-3 border rounded <%= isCorrect ? 'border-success' : 'border-danger' %>">
+            <%= selectedDescription %>
+          </div>
+        </div>
+        
+        <% if (!isCorrect) { %>
+        <div class="mb-4">
+          <h5 class="mb-3">Correct Answer:</h5>
+          <div class="p-3 border rounded border-success">
+            <%= photo.correctDescription %>
+          </div>
+        </div>
+        <% } %>
+        
+        <div class="d-flex justify-content-between mt-4">
+          <a href="/listening" class="btn btn-secondary">Back to Listening</a>
+          <a href="/listening/photographs" class="btn btn-primary">Try Another</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

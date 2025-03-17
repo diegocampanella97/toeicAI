@@ -1,0 +1,209 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Respond to a Voicemail Problem</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Speaking Exercise: Question 10</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <p><strong>Instructions:</strong></p>
+          <p>You will hear a voicemail message that describes a problem. You will be asked to suggest a solution.</p>
+          <p>You will have 30 seconds to prepare your answer and 60 seconds to speak.</p>
+          <p>Click "Listen to Voicemail" when you're ready to begin.</p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Voicemail Problem: <%= voicemailProblem.title %></h6>
+          </div>
+          <div class="card-body">
+            <div id="voicemail-container">
+              <p class="lead">Category: <%= voicemailProblem.category.replace('_', ' ').toUpperCase() %></p>
+              <div class="d-flex justify-content-center mb-3">
+                <button id="play-voicemail-btn" class="btn btn-info">
+                  <i class="bi bi-play-fill"></i> Listen to Voicemail
+                </button>
+              </div>
+              <div class="text-center">
+                <audio id="voicemail-audio" controls class="d-none">
+                  <source src="<%= voicemailProblem.audioUrl || '#' %>" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+              <div id="problem-text" class="d-none">
+                <h5 class="mt-3">Problem:</h5>
+                <p><%= voicemailProblem.problem %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alert alert-light border">
+          <p><strong>Targeted Skills:</strong></p>
+          <ul class="small">
+            <li>Understand what a speaker is asking for</li>
+            <li>Summarize a problem clearly and briefly</li>
+            <li>Come up with a solution to a problem</li>
+            <li>Organize your ideas while speaking</li>
+            <li>Select and use appropriate vocabulary and correct grammatical forms</li>
+          </ul>
+          <p class="small mt-2"><strong>Tips:</strong></p>
+          <ol class="small">
+            <li>First, listen carefully to the message to understand what the problem is and what the listener is asking for</li>
+            <li>Next, think of a reasonable solution. It doesn't have to be complicated. It just has to make sense and be something you can explain</li>
+            <li>Imagine you are leaving a voicemail. Include a greeting, and be sure to introduce yourself</li>
+            <li>Apologize for the problem, or show that you understand the reason for the request</li>
+            <li>Explain your solution step-by-step</li>
+          </ol>
+        </div>
+        
+        <div id="timer-container" class="text-center mb-3">
+          <div id="preparation-timer" class="d-none">
+            <h4>Preparation Time</h4>
+            <h2 id="prep-countdown">30</h2>
+            <p>Use this time to plan your response</p>
+          </div>
+          
+          <div id="speaking-timer" class="d-none">
+            <h4>Speaking Time</h4>
+            <h2 id="speak-countdown">60</h2>
+            <p>Explain your solution now</p>
+          </div>
+        </div>
+        
+        <div id="audio-controls" class="text-center mb-3 d-none">
+          <div class="alert alert-warning">
+            <p><i class="bi bi-mic-fill"></i> Recording in progress...</p>
+          </div>
+          <audio id="audio-playback" controls class="d-none"></audio>
+        </div>
+        
+        <form id="speaking-form" action="/speaking/submit-voicemail-problem" method="POST" class="d-none">
+          <input type="hidden" name="voicemailProblemId" value="<%= voicemailProblem.id %>">
+          <input type="hidden" name="audioUrl" id="audio-url">
+          <div class="d-flex justify-content-between">
+            <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+            <button type="submit" class="btn btn-primary">Submit Recording</button>
+          </div>
+        </form>
+        
+        <div id="control-buttons" class="d-flex justify-content-between">
+          <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+          <button id="start-prep-btn" class="btn btn-primary d-none">Start Preparation</button>
+          <button id="start-speaking-btn" class="btn btn-success d-none">Start Speaking</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const playVoicemailBtn = document.getElementById('play-voicemail-btn');
+    const voicemailAudio = document.getElementById('voicemail-audio');
+    const problemText = document.getElementById('problem-text');
+    const startPrepBtn = document.getElementById('start-prep-btn');
+    const startSpeakingBtn = document.getElementById('start-speaking-btn');
+    const prepTimer = document.getElementById('preparation-timer');
+    const speakTimer = document.getElementById('speaking-timer');
+    const prepCountdown = document.getElementById('prep-countdown');
+    const speakCountdown = document.getElementById('speak-countdown');
+    const audioControls = document.getElementById('audio-controls');
+    const speakingForm = document.getElementById('speaking-form');
+    const controlButtons = document.getElementById('control-buttons');
+    const audioPlayback = document.getElementById('audio-playback');
+    const audioUrlInput = document.getElementById('audio-url');
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    
+    // Play voicemail audio
+    playVoicemailBtn.addEventListener('click', function() {
+      voicemailAudio.classList.remove('d-none');
+      problemText.classList.remove('d-none');
+      playVoicemailBtn.classList.add('d-none');
+      startPrepBtn.classList.remove('d-none');
+      
+      // Play the audio
+      voicemailAudio.play();
+    });
+    
+    // Start preparation timer
+    startPrepBtn.addEventListener('click', function() {
+      startPrepBtn.classList.add('d-none');
+      prepTimer.classList.remove('d-none');
+      
+      let timeLeft = 30;
+      prepCountdown.textContent = timeLeft;
+      
+      const interval = setInterval(function() {
+        timeLeft--;
+        prepCountdown.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          prepTimer.classList.add('d-none');
+          startSpeakingBtn.classList.remove('d-none');
+        }
+      }, 1000);
+    });
+    
+    // Start speaking timer and recording
+    startSpeakingBtn.addEventListener('click', function() {
+      startSpeakingBtn.classList.add('d-none');
+      speakTimer.classList.remove('d-none');
+      audioControls.classList.remove('d-none');
+      
+      // Request microphone access
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
+          
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayback.src = audioUrl;
+            audioPlayback.classList.remove('d-none');
+            audioUrlInput.value = audioUrl;
+            
+            // Stop all tracks in the stream
+            stream.getTracks().forEach(track => track.stop());
+          };
+          
+          // Start recording
+          audioChunks = [];
+          mediaRecorder.start();
+          
+          let speakTime = 60;
+          speakCountdown.textContent = speakTime;
+          
+          const speakInterval = setInterval(function() {
+            speakTime--;
+            speakCountdown.textContent = speakTime;
+            
+            if (speakTime <= 0) {
+              clearInterval(speakInterval);
+              mediaRecorder.stop();
+              speakTimer.classList.add('d-none');
+              controlButtons.classList.add('d-none');
+              speakingForm.classList.remove('d-none');
+            }
+          }, 1000);
+        })
+        .catch(error => {
+          console.error('Error accessing microphone:', error);
+          alert('Error accessing microphone. Please ensure your browser has permission to use the microphone.');
+        });
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

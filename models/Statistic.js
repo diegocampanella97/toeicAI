@@ -6,7 +6,7 @@ const Statistic = sequelize.define('Statistic', {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      isIn: [['writing', 'email', 'speaking']]
+      isIn: [['writing', 'email', 'speaking', 'listening_photo']]
     }
   },
   wordPair: {

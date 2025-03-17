@@ -1,0 +1,51 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">TOEIC Listening Practice</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Listening Exercises</h5>
+      </div>
+      <div class="card-body">
+        <p class="lead">Practice your listening skills with these TOEIC-style exercises:</p>
+        
+        <div class="list-group mb-4">
+          <a href="/listening/photographs" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1">Part 1: Photographs</h5>
+              <p class="mb-1">Look at photographs and select the statement that best describes what you see.</p>
+            </div>
+            <span class="badge bg-primary rounded-pill">Start</span>
+          </a>
+          <div class="list-group-item disabled">
+            <h5 class="mb-1">Part 2: Question-Response (Coming Soon)</h5>
+            <p class="mb-1">Listen to a question and select the best response.</p>
+          </div>
+          <div class="list-group-item disabled">
+            <h5 class="mb-1">Part 3: Conversations (Coming Soon)</h5>
+            <p class="mb-1">Listen to a conversation and answer questions about it.</p>
+          </div>
+          <div class="list-group-item disabled">
+            <h5 class="mb-1">Part 4: Talks (Coming Soon)</h5>
+            <p class="mb-1">Listen to a talk or announcement and answer questions about it.</p>
+          </div>
+        </div>
+        
+        <div class="alert alert-info">
+          <h5>About TOEIC Listening</h5>
+          <p>The TOEIC Listening section tests your ability to understand spoken English in various contexts. It consists of four parts:</p>
+          <ul>
+            <li><strong>Part 1:</strong> Photographs - Identify which statement correctly describes a photo</li>
+            <li><strong>Part 2:</strong> Question-Response - Select the appropriate response to a question</li>
+            <li><strong>Part 3:</strong> Conversations - Answer questions about dialogues between speakers</li>
+            <li><strong>Part 4:</strong> Talks - Answer questions about monologues or announcements</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

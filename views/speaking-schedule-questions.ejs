@@ -1,0 +1,267 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Respond to Questions Based on a Schedule</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Speaking Exercise: Questions 7-9</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <p><strong>Instructions:</strong></p>
+          <p>You will be shown a schedule or agenda followed by three questions. You will have 30 seconds to read the information.</p>
+          <p>Then you will hear each question and respond. You will have 15 seconds to respond to Questions 7 and 8, and 30 seconds to respond to Question 9.</p>
+          <p>Click "Start Preparation" when you're ready to begin.</p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0"><%= scheduleAgenda.title %></h6>
+          </div>
+          <div class="card-body">
+            <div id="schedule-container">
+              <% if (scheduleAgenda.type === 'meeting_agenda') { %>
+                <h5>Meeting Agenda</h5>
+              <% } else if (scheduleAgenda.type === 'travel_itinerary') { %>
+                <h5>Travel Itinerary</h5>
+              <% } else if (scheduleAgenda.type === 'conference_schedule') { %>
+                <h5>Conference Schedule</h5>
+              <% } else if (scheduleAgenda.type === 'tour_schedule') { %>
+                <h5>Tour Schedule</h5>
+              <% } %>
+              
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <% scheduleAgenda.content.forEach(function(item) { %>
+                    <tr>
+                      <% Object.keys(item).forEach(function(key) { %>
+                        <td><strong><%= key %>:</strong> <%= item[key] %></td>
+                      <% }); %>
+                    </tr>
+                  <% }); %>
+                </table>
+              </div>
+            </div>
+            
+            <div id="question-container" class="d-none">
+              <div id="question-1" class="question-item">
+                <h5>Question 7</h5>
+                <p class="lead"><%= scheduleAgenda.questions[0] %></p>
+                <p class="small text-muted">Type: <%= scheduleAgenda.questionTypes[0] %></p>
+              </div>
+              <div id="question-2" class="question-item d-none">
+                <h5>Question 8</h5>
+                <p class="lead"><%= scheduleAgenda.questions[1] %></p>
+                <p class="small text-muted">Type: <%= scheduleAgenda.questionTypes[1] %></p>
+              </div>
+              <div id="question-3" class="question-item d-none">
+                <h5>Question 9</h5>
+                <p class="lead"><%= scheduleAgenda.questions[2] %></p>
+                <p class="small text-muted">Type: <%= scheduleAgenda.questionTypes[2] %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alert alert-light border">
+          <p><strong>Targeted Skills:</strong></p>
+          <ul class="small">
+            <li>Locate relevant information on a written schedule or agenda</li>
+            <li>Summarize several connected pieces of information</li>
+            <li>Understand embedded questions</li>
+            <li>Use appropriate vocabulary and correct grammatical forms</li>
+            <li>Convey requested information clearly and coherently</li>
+          </ul>
+          <p class="small mt-2"><strong>Tips:</strong></p>
+          <ol class="small">
+            <li>Read the title to identify the type of information provided</li>
+            <li>Scan the information for the main idea and to get a general sense of how the information is organized</li>
+            <li>As you listen to each question, skim the information for the answer</li>
+            <li>When speaking, use expressions like "Let's see" to give yourself time to find the information you need</li>
+          </ol>
+        </div>
+        
+        <div id="timer-container" class="text-center mb-3">
+          <div id="preparation-timer" class="d-none">
+            <h4>Preparation Time</h4>
+            <h2 id="prep-countdown">30</h2>
+            <p>Use this time to review the schedule</p>
+          </div>
+          
+          <div id="speaking-timer" class="d-none">
+            <h4>Speaking Time</h4>
+            <h2 id="speak-countdown">15</h2>
+            <p id="current-question-text">Answer Question 7</p>
+          </div>
+        </div>
+        
+        <div id="audio-controls" class="text-center mb-3 d-none">
+          <div class="alert alert-warning">
+            <p><i class="bi bi-mic-fill"></i> Recording in progress...</p>
+          </div>
+          <audio id="audio-playback" controls class="d-none"></audio>
+        </div>
+        
+        <form id="speaking-form" action="/speaking/submit-schedule-questions" method="POST" class="d-none">
+          <input type="hidden" name="scheduleAgendaId" value="<%= scheduleAgenda.id %>">
+          <input type="hidden" name="title" value="<%= scheduleAgenda.title %>">
+          <input type="hidden" name="type" value="<%= scheduleAgenda.type %>">
+          <input type="hidden" name="audioUrl" id="audio-url">
+          <div class="d-flex justify-content-between">
+            <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+            <button type="submit" class="btn btn-primary">Submit Recording</button>
+          </div>
+        </form>
+        
+        <div id="control-buttons" class="d-flex justify-content-between">
+          <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+          <button id="start-prep-btn" class="btn btn-primary">Start Preparation</button>
+          <button id="start-speaking-btn" class="btn btn-success d-none">Start Questions</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const startPrepBtn = document.getElementById('start-prep-btn');
+    const startSpeakingBtn = document.getElementById('start-speaking-btn');
+    const prepTimer = document.getElementById('preparation-timer');
+    const speakTimer = document.getElementById('speaking-timer');
+    const prepCountdown = document.getElementById('prep-countdown');
+    const speakCountdown = document.getElementById('speak-countdown');
+    const currentQuestionText = document.getElementById('current-question-text');
+    const audioControls = document.getElementById('audio-controls');
+    const speakingForm = document.getElementById('speaking-form');
+    const controlButtons = document.getElementById('control-buttons');
+    const audioPlayback = document.getElementById('audio-playback');
+    const audioUrlInput = document.getElementById('audio-url');
+    
+    const scheduleContainer = document.getElementById('schedule-container');
+    const questionContainer = document.getElementById('question-container');
+    
+    const question1 = document.getElementById('question-1');
+    const question2 = document.getElementById('question-2');
+    const question3 = document.getElementById('question-3');
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    let currentQuestion = 1;
+    
+    // Start preparation timer
+    startPrepBtn.addEventListener('click', function() {
+      startPrepBtn.classList.add('d-none');
+      prepTimer.classList.remove('d-none');
+      
+      let timeLeft = 30;
+      prepCountdown.textContent = timeLeft;
+      
+      const interval = setInterval(function() {
+        timeLeft--;
+        prepCountdown.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          prepTimer.classList.add('d-none');
+          startSpeakingBtn.classList.remove('d-none');
+        }
+      }, 1000);
+    });
+    
+    // Start speaking and recording
+    startSpeakingBtn.addEventListener('click', function() {
+      startSpeakingBtn.classList.add('d-none');
+      speakTimer.classList.remove('d-none');
+      audioControls.classList.remove('d-none');
+      
+      // Hide schedule and show questions
+      scheduleContainer.classList.add('d-none');
+      questionContainer.classList.remove('d-none');
+      
+      // Request microphone access
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
+          
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayback.src = audioUrl;
+            audioPlayback.classList.remove('d-none');
+            audioUrlInput.value = audioUrl;
+            
+            // Stop all tracks in the stream
+            stream.getTracks().forEach(track => track.stop());
+          };
+          
+          // Start recording
+          audioChunks = [];
+          mediaRecorder.start();
+          
+          // Start with Question 7 (15 seconds)
+          startQuestionTimer(1, 15);
+        })
+        .catch(error => {
+          console.error('Error accessing microphone:', error);
+          alert('Error accessing microphone. Please ensure your browser has permission to use the microphone.');
+        });
+    });
+    
+    function startQuestionTimer(questionNum, seconds) {
+      currentQuestion = questionNum;
+      
+      // Update UI to show current question
+      if (questionNum === 1) {
+        question1.classList.remove('d-none');
+        question2.classList.add('d-none');
+        question3.classList.add('d-none');
+        currentQuestionText.textContent = 'Answer Question 7';
+      } else if (questionNum === 2) {
+        question1.classList.add('d-none');
+        question2.classList.remove('d-none');
+        question3.classList.add('d-none');
+        currentQuestionText.textContent = 'Answer Question 8';
+      } else {
+        question1.classList.add('d-none');
+        question2.classList.add('d-none');
+        question3.classList.remove('d-none');
+        currentQuestionText.textContent = 'Answer Question 9';
+      }
+      
+      // Set timer
+      let timeLeft = seconds;
+      speakCountdown.textContent = timeLeft;
+      
+      const interval = setInterval(function() {
+        timeLeft--;
+        speakCountdown.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          
+          // Move to next question or finish
+          if (questionNum === 1) {
+            startQuestionTimer(2, 15); // Question 8 (15 seconds)
+          } else if (questionNum === 2) {
+            startQuestionTimer(3, 30); // Question 9 (30 seconds)
+          } else {
+            // End of exercise
+            mediaRecorder.stop();
+            speakTimer.classList.add('d-none');
+            controlButtons.classList.add('d-none');
+            speakingForm.classList.remove('d-none');
+          }
+        }
+      }, 1000);
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

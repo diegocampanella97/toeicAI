@@ -1,0 +1,156 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Listening Exercise: Photographs</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Part 1: Photographs</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <p><strong>Instructions:</strong></p>
+          <p>Look at the photograph below. You will hear four statements about the photograph. Choose the statement that best describes what you see in the photograph.</p>
+          <p>Click "Start Listening" when you're ready to begin.</p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Photograph</h6>
+          </div>
+          <div class="card-body text-center photo-container">
+            <img src="<%= photo.imageUrl %>" alt="TOEIC Listening Photo" class="img-fluid mb-3 photo-display" style="max-height: 400px;">
+            <p class="small text-muted">Category: <%= photo.category %></p>
+          </div>
+        </div>
+        
+        <div id="audio-container" class="text-center mb-4 d-none">
+          <audio id="audio-player" class="audio-player" controls>
+            <source src="<%= photo.audioUrl %>" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+        
+        <div id="choices-container" class="mb-4 d-none">
+          <h5 class="mb-3">Select the statement that best describes the photograph:</h5>
+          
+          <form id="answer-form" action="/listening/submit-photograph" method="POST">
+            <input type="hidden" name="photoId" value="<%= photo.id %>">
+            <input type="hidden" id="selected-choice" name="selectedDescription" value="">
+            
+            <div class="choices-list">
+              <% 
+              // Combine correct and incorrect descriptions and shuffle them
+              const allDescriptions = [photo.correctDescription, ...photo.incorrectDescriptions];
+              const shuffledDescriptions = shuffleArray(allDescriptions);
+              
+              // Display each description as a choice
+              shuffledDescriptions.forEach((description, index) => { 
+              %>
+                <div class="choice-item" data-value="<%= description %>">
+                  <div class="d-flex">
+                    <div class="me-3"><strong><%= String.fromCharCode(65 + index) %>.</strong></div>
+                    <div><%= description %></div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+              <a href="/listening" class="btn btn-secondary">Back to Listening</a>
+              <button type="submit" id="submit-answer-btn" class="btn btn-primary" disabled>Submit Answer</button>
+            </div>
+          </form>
+        </div>
+        
+        <div id="control-buttons" class="d-flex justify-content-between">
+          <a href="/listening" class="btn btn-secondary">Back to Listening</a>
+          <button id="start-listening-btn" class="btn btn-primary">Start Listening</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const startListeningBtn = document.getElementById('start-listening-btn');
+    const audioContainer = document.getElementById('audio-container');
+    const audioPlayer = document.getElementById('audio-player');
+    const choicesContainer = document.getElementById('choices-container');
+    const controlButtons = document.getElementById('control-buttons');
+    const choiceItems = document.querySelectorAll('.choice-item');
+    const selectedChoiceInput = document.getElementById('selected-choice');
+    const submitAnswerBtn = document.getElementById('submit-answer-btn');
+    
+    // Start listening button click handler
+    startListeningBtn.addEventListener('click', function() {
+      // Show audio player
+      audioContainer.classList.remove('d-none');
+      // Hide control buttons
+      controlButtons.classList.add('d-none');
+      
+      // Play audio
+      audioPlayer.play();
+      
+      // When audio ends, show choices
+      audioPlayer.addEventListener('ended', function() {
+        choicesContainer.classList.remove('d-none');
+      });
+    });
+    
+    // Choice selection handler
+    choiceItems.forEach(item => {
+      item.addEventListener('click', function() {
+        // Remove selected class from all items
+        choiceItems.forEach(choice => choice.classList.remove('selected'));
+        
+        // Add selected class to clicked item
+        this.classList.add('selected');
+        
+        // Update hidden input value
+        selectedChoiceInput.value = this.dataset.value;
+        
+        // Enable submit button
+        submitAnswerBtn.disabled = false;
+      });
+    });
+  });
+  
+  // Function to shuffle array (for randomizing choices)
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+</script>
+
+<style>
+  .choices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .choice-item {
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .choice-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .choice-item.selected {
+    background-color: #cfe2ff;
+    border-color: #9ec5fe;
+  }
+</style>
+
+<%- include('partials/footer') %>

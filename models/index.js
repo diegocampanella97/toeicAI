@@ -7,6 +7,9 @@ const SpeakingText = require('./SpeakingText');
 const SpeakingResponse = require('./SpeakingResponse');
 const Statistic = require('./Statistic');
 const PersonalQuestionTopic = require('./PersonalQuestionTopic');
+const ScheduleAgenda = require('./ScheduleAgenda');
+const VoicemailProblem = require('./VoicemailProblem');
+const ListeningPhoto = require('./ListeningPhoto');
 
 module.exports = {
   Email,
@@ -16,5 +19,8 @@ module.exports = {
   SpeakingText,
   SpeakingResponse,
   Statistic,
-  PersonalQuestionTopic
+  PersonalQuestionTopic,
+  ScheduleAgenda,
+  VoicemailProblem,
+  ListeningPhoto
 };
