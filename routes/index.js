@@ -779,4 +779,218 @@ function simulateSpeakingEvaluation() {
   };
 }
 
+// Speaking describe photo exercise route
+router.get('/speaking/describe-photo', async (req, res) => {
+  try {
+    // Categories for photo description exercises
+    const categories = [
+      'dining_out',
+      'shopping',
+      'healthcare',
+      'household_chores',
+      'entertainment',
+      'leisure',
+      'outdoor_scenes',
+      'street_scenes',
+      'travel',
+      'office_work'
+    ];
+    
+    // Select a random category
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    
+    // Generate image prompt based on the category
+    let imagePrompt = "";
+    switch(category) {
+      case 'dining_out':
+        imagePrompt = "A clear, professional photo of people dining in a restaurant, showing waiters, tables, and customers enjoying their meal.";
+        break;
+      case 'shopping':
+        imagePrompt = "A clear, professional photo of people shopping in a mall or store, showing products, shoppers, and store employees.";
+        break;
+      case 'healthcare':
+        imagePrompt = "A clear, professional photo of a healthcare setting with medical professionals and patients in a clinic or hospital.";
+        break;
+      case 'household_chores':
+        imagePrompt = "A clear, professional photo of someone performing household chores like cleaning, cooking, or organizing at home.";
+        break;
+      case 'entertainment':
+        imagePrompt = "A clear, professional photo of people enjoying entertainment such as watching a movie, attending a concert, or playing games.";
+        break;
+      case 'leisure':
+        imagePrompt = "A clear, professional photo of people engaged in leisure activities like reading, relaxing in a park, or having a picnic.";
+        break;
+      case 'outdoor_scenes':
+        imagePrompt = "A clear, professional photo of an outdoor scene with people engaging in activities in a natural setting like a park or garden.";
+        break;
+      case 'street_scenes':
+        imagePrompt = "A clear, professional photo of a street scene with pedestrians, vehicles, and buildings in an urban environment.";
+        break;
+      case 'travel':
+        imagePrompt = "A clear, professional photo of people traveling, showing transportation, luggage, and tourist activities.";
+        break;
+      case 'office_work':
+        imagePrompt = "A clear, professional photo of people working in an office environment with desks, computers, and colleagues collaborating.";
+        break;
+      default:
+        imagePrompt = "A clear, professional photo of people engaged in a common everyday activity in a familiar setting.";
+    }
+    
+    // Add TOEIC-specific requirements to the prompt
+    imagePrompt += " The image should be suitable for a TOEIC English exam speaking question where test-takers need to describe what they see.";
+    
+    // Generate image using OpenAI
+    const image = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: imagePrompt,
+      n: 1,
+      size: "1024x1024",
+    });
+    
+    const imageUrl = image.data[0].url;
+    
+    // Format category for display (replace underscores with spaces and capitalize)
+    const displayCategory = category.replace('_', ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    
+    res.render('speaking-describe-photo', {
+      title: 'Describe a Photo Exercise',
+      imageUrl: imageUrl,
+      category: displayCategory
+    });
+  } catch (error) {
+    console.error('Error generating photo description exercise:', error);
+    res.status(500).render('error', {
+      message: 'Failed to generate photo description exercise',
+      error: error
+    });
+  }
+});
+
+// Submit photo description response
+router.post('/speaking/submit-describe-photo', async (req, res) => {
+  const { photoCategory, photoUrl, audioUrl } = req.body;
+  
+  try {
+    // In a real application, you would send the audio to a speech recognition service
+    // For this demo, we'll simulate an evaluation with additional criteria for photo description
+    const evaluation = simulatePhotoDescriptionEvaluation();
+    
+    // Determine feedback class based on evaluation
+    const feedbackClass = evaluation.score >= 4 ? 'alert-success' : 
+                         evaluation.score >= 2 ? 'alert-info' : 'alert-warning';
+    
+    // Save response statistics
+    const SpeakingResponse = require('../models/SpeakingResponse');
+    await SpeakingResponse.create({
+      speakingTextId: 0, // No text ID for photo description
+      audioUrl: audioUrl,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      score: evaluation.score,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions
+    });
+    
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Photo Description - ${photoCategory}]`,
+        topic: 'Photo Description',
+        category: photoCategory
+      },
+      audioUrl: audioUrl,
+      photoUrl: photoUrl,
+      feedback: evaluation.message,
+      suggestions: evaluation.suggestions,
+      score: evaluation.score,
+      pronunciation: evaluation.pronunciation,
+      intonation: evaluation.intonation,
+      fluency: evaluation.fluency,
+      vocabulary: evaluation.vocabulary,
+      grammar: evaluation.grammar,
+      feedbackClass: feedbackClass
+    });
+  } catch (error) {
+    console.error('Error evaluating photo description:', error);
+    res.render('speaking-feedback', {
+      title: 'Speaking Exercise Feedback',
+      speakingText: { 
+        text: `[Photo Description - ${photoCategory}]`,
+        topic: 'Photo Description',
+        category: photoCategory
+      },
+      audioUrl: audioUrl,
+      photoUrl: photoUrl,
+      feedback: 'We encountered an error while evaluating your response. Please try again.',
+      feedbackClass: 'alert-danger',
+      score: 0,
+      pronunciation: 0,
+      intonation: 0,
+      fluency: 0,
+      vocabulary: 0,
+      grammar: 0,
+      suggestions: []
+    });
+  }
+});
+
+// Function to simulate photo description evaluation
+// In a real application, this would be replaced with a call to a speech recognition API
+function simulatePhotoDescriptionEvaluation() {
+  // Generate random scores between 3 and 5 for a more positive experience
+  const pronunciation = Math.floor(Math.random() * 3) + 3;
+  const intonation = Math.floor(Math.random() * 3) + 3;
+  const fluency = Math.floor(Math.random() * 3) + 3;
+  const vocabulary = Math.floor(Math.random() * 3) + 3;
+  const grammar = Math.floor(Math.random() * 3) + 3;
+  
+  // Calculate overall score (average of the five scores)
+  const score = Math.round((pronunciation + intonation + fluency + vocabulary + grammar) / 5);
+  
+  // Generate feedback based on score
+  let message = "";
+  let suggestions = [];
+  
+  if (score >= 4) {
+    message = "Excellent job! Your description was clear, detailed, and well-structured with good pronunciation and appropriate vocabulary.";
+    suggestions = [
+      "Continue practicing with more complex scenes",
+      "Work on including more specific details in your descriptions",
+      "Practice using a wider range of descriptive adjectives",
+      "Try to make connections between elements in the photo"
+    ];
+  } else if (score >= 3) {
+    message = "Good job! Your description covered the main elements of the photo with generally clear pronunciation and appropriate vocabulary.";
+    suggestions = [
+      "Practice organizing your description more logically",
+      "Work on using more precise vocabulary to describe actions and objects",
+      "Pay attention to verb tenses when describing activities",
+      "Try to speak at a more natural pace"
+    ];
+  } else {
+    message = "You've made a good start. With more practice, you can improve your photo description skills.";
+    suggestions = [
+      "Start by identifying the main elements in the photo before speaking",
+      "Practice using simple, clear sentences to describe what you see",
+      "Work on basic vocabulary for common objects, actions, and settings",
+      "Record yourself and listen for areas to improve"
+    ];
+  }
+  
+  return {
+    pronunciation,
+    intonation,
+    fluency,
+    vocabulary,
+    grammar,
+    score,
+    message,
+    suggestions
+  };
+}
+
 module.exports = router;

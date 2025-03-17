@@ -1,0 +1,178 @@
+<%- include('partials/header', {title: title}) %>
+
+<h1 class="mb-4">Describe a Photo</h1>
+
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">Speaking Exercise: Describe a Photo</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <p><strong>Instructions:</strong></p>
+          <p>Look at the photo below and describe what you see. You will have 30 seconds to prepare, then 45 seconds to speak.</p>
+          <p>Click "Start Preparation" when you're ready to begin.</p>
+        </div>
+        
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">Photo to Describe</h6>
+          </div>
+          <div class="card-body text-center">
+            <img src="<%= imageUrl %>" alt="TOEIC Speaking Photo" class="img-fluid mb-3" style="max-height: 400px;">
+            <p class="small text-muted">Category: <%= category %></p>
+          </div>
+        </div>
+        
+        <div class="alert alert-light border">
+          <p><strong>Targeted Skills:</strong></p>
+          <ul class="small">
+            <li>Pronounce common words correctly</li>
+            <li>Identify the important features of a photo</li>
+            <li>Describe a photo using appropriate vocabulary</li>
+            <li>Describe a photo using correct sentence structure</li>
+          </ul>
+          <p class="small mt-2"><strong>Tips:</strong></p>
+          <ol class="small">
+            <li>First, scan the photo. What information will you need in your response?</li>
+            <li>Begin your answer with a sentence starter, such as "In this photograph, there are..." or "In this picture, I see..."</li>
+            <li>Describe the main elements: people, objects, activities, and setting</li>
+            <li>Use appropriate vocabulary and correct grammar</li>
+            <li>Speak clearly and at a natural pace</li>
+          </ol>
+        </div>
+        
+        <div id="timer-container" class="text-center mb-3">
+          <div id="preparation-timer" class="d-none">
+            <h4>Preparation Time</h4>
+            <h2 id="prep-countdown">30</h2>
+            <p>Use this time to plan what you will say</p>
+          </div>
+          
+          <div id="speaking-timer" class="d-none">
+            <h4>Speaking Time</h4>
+            <h2 id="speak-countdown">45</h2>
+            <p>Describe the photo now</p>
+          </div>
+        </div>
+        
+        <div id="audio-controls" class="text-center mb-3 d-none">
+          <div class="alert alert-warning">
+            <p><i class="bi bi-mic-fill"></i> Recording in progress...</p>
+          </div>
+          <audio id="audio-playback" controls class="d-none"></audio>
+        </div>
+        
+        <form id="speaking-form" action="/speaking/submit-describe-photo" method="POST" class="d-none">
+          <input type="hidden" name="photoCategory" value="<%= category %>">
+          <input type="hidden" name="photoUrl" value="<%= imageUrl %>">
+          <input type="hidden" name="audioUrl" id="audio-url">
+          <div class="d-flex justify-content-between">
+            <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+            <button type="submit" class="btn btn-primary">Submit Recording</button>
+          </div>
+        </form>
+        
+        <div id="control-buttons" class="d-flex justify-content-between">
+          <a href="/speaking" class="btn btn-secondary">Back to Speaking</a>
+          <button id="start-prep-btn" class="btn btn-primary">Start Preparation</button>
+          <button id="start-speaking-btn" class="btn btn-success d-none">Start Speaking</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const startPrepBtn = document.getElementById('start-prep-btn');
+    const startSpeakingBtn = document.getElementById('start-speaking-btn');
+    const prepTimer = document.getElementById('preparation-timer');
+    const speakTimer = document.getElementById('speaking-timer');
+    const prepCountdown = document.getElementById('prep-countdown');
+    const speakCountdown = document.getElementById('speak-countdown');
+    const audioControls = document.getElementById('audio-controls');
+    const speakingForm = document.getElementById('speaking-form');
+    const controlButtons = document.getElementById('control-buttons');
+    const audioPlayback = document.getElementById('audio-playback');
+    const audioUrlInput = document.getElementById('audio-url');
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    
+    // Start preparation timer
+    startPrepBtn.addEventListener('click', function() {
+      startPrepBtn.classList.add('d-none');
+      prepTimer.classList.remove('d-none');
+      
+      let prepTime = 30; // 30 seconds for preparation
+      prepCountdown.textContent = prepTime;
+      
+      const prepInterval = setInterval(function() {
+        prepTime--;
+        prepCountdown.textContent = prepTime;
+        
+        if (prepTime <= 0) {
+          clearInterval(prepInterval);
+          prepTimer.classList.add('d-none');
+          startSpeakingBtn.classList.remove('d-none');
+        }
+      }, 1000);
+    });
+    
+    // Start speaking timer and recording
+    startSpeakingBtn.addEventListener('click', function() {
+      startSpeakingBtn.classList.add('d-none');
+      speakTimer.classList.remove('d-none');
+      audioControls.classList.remove('d-none');
+      
+      // Request microphone access
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
+          
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            audioPlayback.src = audioUrl;
+            audioPlayback.classList.remove('d-none');
+            audioUrlInput.value = audioUrl;
+            
+            // Stop all tracks in the stream
+            stream.getTracks().forEach(track => track.stop());
+          };
+          
+          // Start recording
+          audioChunks = [];
+          mediaRecorder.start();
+          
+          let speakTime = 45; // 45 seconds for speaking
+          speakCountdown.textContent = speakTime;
+          
+          const speakInterval = setInterval(function() {
+            speakTime--;
+            speakCountdown.textContent = speakTime;
+            
+            if (speakTime <= 0) {
+              clearInterval(speakInterval);
+              mediaRecorder.stop();
+              speakTimer.classList.add('d-none');
+              controlButtons.classList.add('d-none');
+              speakingForm.classList.remove('d-none');
+            }
+          }, 1000);
+        })
+        .catch(error => {
+          console.error('Error accessing microphone:', error);
+          alert('Error accessing microphone. Please ensure your browser has permission to use the microphone.');
+        });
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>
